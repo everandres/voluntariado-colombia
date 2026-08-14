@@ -117,12 +117,16 @@ export function PlaceCard({
   return (
     <article className="card">
       <header className="card-head">
-        <h2 className="card-title">{row[titleKey] || "Sin nombre"}</h2>
         {need && (
           <span className={needsHelp ? "badge badge-on" : "badge"}>
-            {needsHelp ? "Se necesita" : need}
+            {needsHelp
+              ? "Se necesita"
+              : /^no$/i.test(need)
+                ? "No se necesita"
+                : need}
           </span>
         )}
+        <h2 className="card-title">{row[titleKey] || "Sin nombre"}</h2>
       </header>
 
       <div className="fields">

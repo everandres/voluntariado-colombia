@@ -1,16 +1,19 @@
 :root {
   --bg: #ffffff;
-  --ink: #111111;
-  --ink-soft: #5c5c5c;
-  --ink-faint: #8e8e8e;
+  --ink: #111111; /* único color "neutro": el texto que se lee */
+
+  /* Colores de la bandera de Colombia. */
+  --amarillo: #fcd116;
+  --azul: #003893;
+  --rojo: #ce1126;
+
+  /* El amarillo sobre blanco no alcanza contraste de texto (~1.5:1), así que
+     solo se usa como fondo o franja. Azul (11:1) y rojo (5.9:1) sí sirven. */
+
   --line: #e6e6e6;
-  --line-strong: #111111;
-  --accent: #ff4d00;
-  --ok-bg: #e8f6ec;
-  --ok-ink: #14663a;
+  --line-strong: var(--azul);
   --off-bg: #f2f2f2;
   --off-ink: #6b6b6b;
-  --alert: #b00020;
   --radius: 14px;
 }
 
@@ -57,8 +60,31 @@ a {
 }
 
 .masthead {
-  border-bottom: 3px solid var(--line-strong);
   padding-bottom: 20px;
+  border-bottom: 5px solid transparent;
+  /* Franja tricolor con las proporciones de la bandera: 1/2, 1/4, 1/4. */
+  border-image: linear-gradient(
+      to right,
+      var(--amarillo) 0 50%,
+      var(--azul) 50% 75%,
+      var(--rojo) 75% 100%
+    )
+    1;
+}
+
+.masthead-top {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+  flex-wrap: wrap;
+}
+
+.flag {
+  flex-shrink: 0;
+  width: clamp(52px, 8vw, 92px);
+  height: auto;
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .title {
@@ -67,14 +93,18 @@ a {
   color: var(--ink);
 }
 
+.title-primero {
+  color: var(--azul);
+}
+
 .title-accent {
-  color: var(--accent);
+  color: var(--rojo);
 }
 
 .tagline {
   margin-top: 12px;
   font-size: 0.9rem;
-  color: var(--ink-soft);
+  color: var(--ink);
   max-width: 60ch;
 }
 
@@ -94,25 +124,25 @@ a {
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 11px 18px;
-  border: 2px solid var(--line-strong);
+  border: 2px solid var(--azul);
   border-radius: 999px;
   background: transparent;
-  color: var(--ink);
+  color: var(--azul);
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
 }
 
 .tab:hover {
-  background: var(--off-bg);
+  background: #eef2fa;
 }
 
 .tab[aria-selected="true"] {
-  background: var(--ink);
+  background: var(--azul);
   color: #fff;
 }
 
 .tab:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--rojo);
   outline-offset: 2px;
 }
 
@@ -135,6 +165,7 @@ a {
 }
 
 .stat-num {
+  color: var(--azul);
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
@@ -145,7 +176,7 @@ a {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--azul);
 }
 
 .live {
@@ -156,14 +187,14 @@ a {
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--rojo);
 }
 
 .live-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--rojo);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -205,15 +236,17 @@ a {
 }
 
 .card:hover {
-  border-color: var(--ink);
+  border-color: var(--azul);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
+/* El estado (se necesita / no) va antes del nombre del lugar: es el dato que
+   la gente busca primero. */
 .card-head {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 9px;
 }
 
 .card-title {
@@ -237,8 +270,8 @@ a {
 }
 
 .badge-on {
-  background: var(--ok-bg);
-  color: var(--ok-ink);
+  background: var(--amarillo);
+  color: var(--ink);
 }
 
 .fields {
@@ -251,7 +284,7 @@ a {
   font-size: 0.63rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--azul);
   margin-bottom: 3px;
 }
 
@@ -281,7 +314,7 @@ a {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--rojo);
 }
 
 .expand-toggle:hover {
@@ -303,25 +336,27 @@ a {
   letter-spacing: 0.03em;
   padding: 9px 14px;
   border-radius: 999px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--azul);
+  color: var(--azul);
   text-decoration: none;
   transition: background 0.12s ease, color 0.12s ease;
 }
 
 .action:hover {
-  background: var(--ink);
+  background: var(--azul);
   color: #fff;
 }
 
 .action-primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--rojo);
+  border-color: var(--rojo);
   color: #fff;
 }
 
 .action-primary:hover {
   background: var(--ink);
   border-color: var(--ink);
+  color: #fff;
 }
 
 /* ---------- estados ---------- */
@@ -331,12 +366,12 @@ a {
   border-radius: var(--radius);
   border: 1px solid var(--line);
   font-size: 0.85rem;
-  color: var(--ink-soft);
+  color: var(--ink);
 }
 
 .notice-error {
-  border-color: var(--alert);
-  color: var(--alert);
+  border-color: var(--rojo);
+  color: var(--rojo);
 }
 
 .skeleton-grid {
@@ -370,7 +405,11 @@ a {
   padding-top: 16px;
   border-top: 1px solid var(--line);
   font-size: 0.75rem;
-  color: var(--ink-faint);
+  color: var(--ink);
+}
+
+.footer a {
+  color: var(--azul);
 }
 
 .footer a {

@@ -5,6 +5,22 @@ import { PlaceCard } from "./components/PlaceCard";
 import { useSheetData, useSheetTabs } from "./hooks/useSheetData";
 import { DEFAULT_GID, SHEET_ID } from "@/lib/sheet";
 
+/** Bandera de Colombia: franjas 1/2 amarillo, 1/4 azul, 1/4 rojo sobre 3:2. */
+function ColombiaFlag() {
+  return (
+    <svg
+      className="flag"
+      viewBox="0 0 3 2"
+      role="img"
+      aria-label="Bandera de Colombia"
+    >
+      <rect width="3" height="1" fill="var(--amarillo)" />
+      <rect y="1" width="3" height="0.5" fill="var(--azul)" />
+      <rect y="1.5" width="3" height="0.5" fill="var(--rojo)" />
+    </svg>
+  );
+}
+
 export default function Page() {
   const tabs = useSheetTabs();
   const [gid, setGid] = useState(DEFAULT_GID);
@@ -18,9 +34,13 @@ export default function Page() {
   return (
     <main className="page">
       <header className="masthead">
-        <h1 className="title display">
-          Puntos de <span className="title-accent">Voluntariado</span>
-        </h1>
+        <div className="masthead-top">
+          <h1 className="title display">
+            <span className="title-primero">Puntos de</span>{" "}
+            <span className="title-accent">Voluntariado</span>
+          </h1>
+          <ColombiaFlag />
+        </div>
         <p className="tagline">
           Información en vivo desde el Google Sheet colaborativo. Se actualiza
           sola cada pocos segundos — no hace falta recargar.
