@@ -28,35 +28,132 @@ export function isValidGid(gid: string) {
 
 export type SheetRow = Record<string, string>;
 
+/** Texto comparable: sin acentos, en mayúsculas y con espacios colapsados. */
+function normalizeText(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // marcas de acento
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 /**
- * Alias exactos, solo para lo que la heurística de abajo no puede deducir.
- * Todo lo demás (texto de UI pegado al encabezado) se limpia por patrón.
+ * Catálogo de columnas conocidas. En vez de recortar el ruido del encabezado
+ * —que unas veces va delante del nombre, otras detrás y otras a ambos lados—
+ * buscamos la palabra clave donde sea que esté y devolvemos SIEMPRE el mismo
+ * nombre canónico. Así la etiqueta que ve la gente no depende de lo que
+ * alguien escriba alrededor.
  */
+const KNOWN_COLUMNS: Array<{ canonical: string; pattern: RegExp }> = [
+  { canonical: "LUGAR", pattern: /LUGAR/ },
+  { canonical: "DIRECCIÓN", pattern: /DIRECCION/ },
+  { canonical: "HORA DE ACTUALIZACIÓN", pattern: /HORA DE ACTUALIZACION/ },
+  { canonical: "HORARIOS", pattern: /HORARIO/ },
+  { canonical: "NOTAS", pattern: /NOTAS/ },
+  { canonical: "LINK DE INSCRIPCIÓN", pattern: /INSCRIPCION/ },
+  { canonical: "GRUPO DE WHATSAPP", pattern: /WHATSAPP|GRUPO DE WA\b/ },
+  { canonical: "INSTAGRAM", pattern: /INSTAGRAM/ },
+  { canonical: "CONTACTO CLAVE", pattern: /CONTACTO/ },
+  { canonical: "FUNCIONES VOLUNTARIOS", pattern: /FUNCIONES/ },
+  { canonical: "¿QUÉ INSUMOS NECESITAN?", pattern: /INSUMOS/ },
+  // "SE NECESITAN VOLUNTARIOS SI" y "… YA" son la misma columna.
+  { canonical: "SE NECESITAN VOLUNTARIOS", pattern: /SE NECESITAN VOLUNTARIOS/ },
+  { canonical: "SE NECESITAN DONACIONES", pattern: /SE NECESITAN DONACIONES/ },
+];
+
+/** Alias exactos para encabezados sin ninguna palabra reconocible. */
 const HEADER_ALIASES: Record<string, string> = {
-  "SE NECESITAN VOLUNTARIOS YA": "SE NECESITAN VOLUNTARIOS",
-  x: "DETALLES",
+  X: "DETALLES",
 };
 
 /**
- * En el Sheet hay enlaces y notas flotantes puestos encima de la fila de
- * encabezados ("Míralo aquí", "Pregunta haciendo click aquí", "También puedes
- * ver esta información en un mapa"). Al exportar a CSV se pegan al nombre de la
- * columna que tengan debajo, y se MUEVEN de columna cuando alguien edita el
- * documento — por eso no sirve un mapa de encabezados exactos.
- *
- * Los nombres reales van en MAYÚSCULAS y el ruido en Sentence case, así que nos
- * quedamos con el tramo final en mayúsculas. Lo que no encaje se devuelve tal
- * cual y lo filtra isJunkHeader.
+ * Último recurso para encabezados que no están en el catálogo: si el ruido va
+ * delante del nombre ("Míralo aquí DIRECCIÓN"), el nombre real es el tramo
+ * final en mayúsculas. Lo que tampoco encaje se devuelve tal cual y lo filtra
+ * isJunkHeader.
  */
 const UPPERCASE_TAIL = /([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 ]*)$/;
 
-function cleanHeader(raw: string) {
-  const trimmed = raw.trim().replace(/\s+/g, " ");
+/** Tramos entre "¿" y "?": son preguntas de la interfaz, no nombres de columna. */
+function questionRanges(text: string) {
+  const ranges: Array<[number, number]> = [];
+  const re = /¿[^?]*\?/g;
+  for (const match of text.matchAll(re)) {
+    ranges.push([match.index, match.index + match[0].length]);
+  }
+  return ranges;
+}
 
-  const alias = HEADER_ALIASES[trimmed];
+/** Candidatos de un encabezado, del más al menos probable. */
+function candidatesFor(normalized: string) {
+  const questions = questionRanges(normalized);
+
+  return KNOWN_COLUMNS.flatMap(({ canonical, pattern }) => {
+    const at = normalized.search(pattern);
+    if (at === -1) return [];
+    const inQuestion = questions.some(([from, to]) => at >= from && at < to);
+    return [{ canonical, at, inQuestion }];
+  }).sort(
+    (a, b) => Number(a.inQuestion) - Number(b.inQuestion) || a.at - b.at,
+  );
+}
+
+/** Encabezado que no reconocemos: lo dejamos lo más limpio posible. */
+function fallbackHeader(trimmed: string, normalized: string) {
+  const alias = HEADER_ALIASES[normalized];
   if (alias) return alias;
 
+  // Si el ruido va delante del nombre ("Míralo aquí DIRECCIÓN"), el nombre es
+  // el tramo final en mayúsculas.
   return UPPERCASE_TAIL.exec(trimmed)?.[1].trim() ?? trimmed;
+}
+
+/**
+ * Resuelve los encabezados de la hoja como conjunto, no uno por uno: un mismo
+ * encabezado sucio puede contener varias palabras del catálogo (la columna
+ * LUGAR de donaciones arrastra un "¿QUÉ INSUMOS NECESITA CADA PUNTO?"), así que
+ * primero mandan las columnas cuyo nombre es exacto y cada nombre se asigna una
+ * sola vez. Sin esto dos columnas colapsarían en la misma clave.
+ */
+function resolveHeaders(headerRow: string[]) {
+  const prepared = headerRow.map((raw, index) => {
+    const trimmed = raw.trim().replace(/\s+/g, " ");
+    const normalized = normalizeText(trimmed);
+    return { index, trimmed, normalized, candidates: candidatesFor(normalized) };
+  });
+
+  const resolved = new Map<number, string>();
+  const taken = new Set<string>();
+
+  // 1) Encabezados que son exactamente el nombre de una columna.
+  for (const column of prepared) {
+    const exact = column.candidates.find(
+      (candidate) => normalizeText(candidate.canonical) === column.normalized,
+    );
+    if (exact && !taken.has(exact.canonical)) {
+      resolved.set(column.index, exact.canonical);
+      taken.add(exact.canonical);
+    }
+  }
+
+  // 2) El resto se queda con su mejor candidato que siga libre.
+  for (const column of prepared) {
+    if (resolved.has(column.index)) continue;
+
+    const free = column.candidates.find(({ canonical }) => !taken.has(canonical));
+    if (free) {
+      resolved.set(column.index, free.canonical);
+      taken.add(free.canonical);
+    } else {
+      resolved.set(column.index, fallbackHeader(column.trimmed, column.normalized));
+    }
+  }
+
+  return prepared.map(({ index }) => ({
+    index,
+    name: resolved.get(index) as string,
+  }));
 }
 
 /**
@@ -96,10 +193,9 @@ export function parseSheetCsv(csvText: string): {
 } {
   const { data } = Papa.parse<string[]>(csvText, { skipEmptyLines: true });
 
-  const headerRow = data[0] ?? [];
-  const named = headerRow
-    .map((raw, index) => ({ index, name: cleanHeader(raw) }))
-    .filter(({ name }) => !isJunkHeader(name));
+  const named = resolveHeaders(data[0] ?? []).filter(
+    ({ name }) => !isJunkHeader(name),
+  );
 
   const columns = named.map(({ name }) => name);
 
