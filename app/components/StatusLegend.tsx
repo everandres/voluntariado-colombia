@@ -57,7 +57,8 @@ export function StatusLegend({
     <section className="legend" aria-label="Filtrar por estado">
       <div className="legend-head">
         <h2 className="legend-title">
-          Qué significa cada etiqueta — toca una para filtrar
+          Qué significa cada etiqueta
+          <span className="legend-hint"> · toca una para filtrar</span>
         </h2>
         {active && (
           <button
@@ -70,26 +71,27 @@ export function StatusLegend({
         )}
       </div>
 
-      <ul className="legend-items">
+      {/* Los botones cuelgan directo del grid para que badges y textos queden
+          alineados en columnas con subgrid, sin un <li> de por medio. */}
+      <div className="legend-items" role="group" aria-label="Filtrar por estado">
         {entries.map(({ label, status, count }) => (
-          <li key={label}>
-            <button
-              type="button"
-              className={
-                active === label ? "legend-item legend-item-on" : "legend-item"
-              }
-              aria-pressed={active === label}
-              onClick={() => onToggle(label)}
-            >
-              <span className={BADGE_CLASS[status]}>{label}</span>
-              <span className="legend-text">
-                {needMeaning(status, subject)}
-                <span className="legend-count"> · {count}</span>
-              </span>
-            </button>
-          </li>
+          <button
+            key={label}
+            type="button"
+            className={
+              active === label ? "legend-item legend-item-on" : "legend-item"
+            }
+            aria-pressed={active === label}
+            onClick={() => onToggle(label)}
+          >
+            <span className={BADGE_CLASS[status]}>{label}</span>
+            <span className="legend-text">
+              {needMeaning(status, subject)}
+              <span className="legend-count"> · {count}</span>
+            </span>
+          </button>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }

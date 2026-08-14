@@ -235,7 +235,7 @@ a {
 
 .legend {
   margin: 0 0 24px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: var(--radius);
   background: #fafafa;
   border: 1px solid var(--line);
@@ -247,7 +247,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .legend-title {
@@ -256,6 +256,19 @@ a {
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--azul);
+}
+
+/* En pantallas angostas el título ya ocupa su línea completa. */
+.legend-hint {
+  display: none;
+}
+
+@media (min-width: 560px) {
+  .legend-hint {
+    display: inline;
+    font-weight: 700;
+    color: var(--ink);
+  }
 }
 
 .legend-clear {
@@ -274,26 +287,44 @@ a {
   text-decoration: underline;
 }
 
+/* Una entrada por fila. Con anchos de badge distintos, envolverlas en flex
+   dejaba los textos desalineados y una entrada huérfana entre 900 y 1100px. */
 .legend-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  list-style: none;
+  display: grid;
+  gap: 2px;
 }
 
-/* Cada entrada filtra la lista, por eso es un botón y no solo una etiqueta. */
+/* Cada entrada filtra la lista, por eso es un botón y no solo una etiqueta.
+   En pantallas angostas el texto va debajo del badge. */
 .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  display: grid;
+  justify-items: start;
+  gap: 5px;
   font: inherit;
   text-align: left;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border: 2px solid transparent;
-  border-radius: 999px;
+  border-radius: 12px;
   background: none;
   cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+/* Desde aquí caben en una línea: el subgrid alinea todos los badges en una
+   columna y todos los textos en otra, sin importar cuánto midan las etiquetas. */
+@media (min-width: 560px) {
+  .legend-items {
+    grid-template-columns: max-content 1fr;
+  }
+
+  .legend-item {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    column-gap: 12px;
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
 }
 
 .legend-item:hover {
