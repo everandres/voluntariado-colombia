@@ -1,69 +1,69 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import { useSheetData } from "./hooks/useSheetData";
+
+const cellStyle: React.CSSProperties = {
+  border: "1px solid #ddd",
+  padding: 8,
+  verticalAlign: "top",
+  whiteSpace: "pre-line",
+  minWidth: 140,
+};
+
+export default function Page() {
+  const { rows, columns, updatedAt, loading, error } = useSheetData(5000);
+
+  if (loading) return <p style={{ padding: 24 }}>Cargando datos...</p>;
+
+  const hasData = rows.length > 0;
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{ padding: 24, fontFamily: "sans-serif" }}>
+      <h1 style={{ margin: 0 }}>Voluntariado — datos en vivo</h1>
+      <p style={{ color: "#666", fontSize: 13 }}>
+        Última actualización:{" "}
+        {updatedAt ? new Date(updatedAt).toLocaleTimeString() : "—"} · {rows.length}{" "}
+        registros
+      </p>
+
+      {error && (
+        <p style={{ color: "#b00", fontSize: 13 }}>
+          Error: {error}
+          {hasData && " (mostrando los últimos datos recibidos)"}
+        </p>
+      )}
+
+      {!hasData && !error && <p>No hay datos para mostrar.</p>}
+
+      {hasData && (
+        <div style={{ overflowX: "auto", marginTop: 16 }}>
+          <table style={{ borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                {columns.map((col) => (
+                  <th
+                    key={col}
+                    style={{ ...cellStyle, textAlign: "left", background: "#f5f5f5" }}
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i}>
+                  {columns.map((col) => (
+                    <td key={col} style={cellStyle}>
+                      {row[col]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }
