@@ -5,6 +5,11 @@ import { PlaceCard } from "./components/PlaceCard";
 import { useSheetData, useSheetTabs } from "./hooks/useSheetData";
 import { DEFAULT_GID, SHEET_ID } from "@/lib/sheet";
 
+/** El Sheet abierto en la pestaña que se está viendo. */
+function sheetUrl(gid: string) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${gid}`;
+}
+
 /** Bandera de Colombia: franjas 1/2 amarillo, 1/4 azul, 1/4 rojo sobre 3:2. */
 function ColombiaFlag() {
   return (
@@ -42,8 +47,18 @@ export default function Page() {
           <ColombiaFlag />
         </div>
         <p className="tagline">
-          Información en vivo desde el Google Sheet colaborativo. Se actualiza
-          sola cada pocos segundos — no hace falta recargar.
+          Información en vivo desde un{" "}
+          <a
+            className="tagline-link"
+            href={sheetUrl(gid)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Google Sheet colaborativo
+          </a>
+          : ábrelo para registrar un punto nuevo o actualizar los datos de uno
+          existente. Esta página se actualiza sola cada pocos segundos — no hace
+          falta recargar.
         </p>
 
         <nav className="tabs" role="tablist" aria-label="Hojas del documento">
@@ -112,11 +127,7 @@ export default function Page() {
 
       <footer className="footer">
         Fuente:{" "}
-        <a
-          href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${gid}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={sheetUrl(gid)} target="_blank" rel="noopener noreferrer">
           Google Sheet original
         </a>
       </footer>

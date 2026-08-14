@@ -113,6 +113,18 @@ a {
   max-width: 60ch;
 }
 
+.tagline-link {
+  color: var(--azul);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.tagline-link:hover {
+  color: var(--rojo);
+}
+
 /* ---------- pestañas ---------- */
 
 .tabs {

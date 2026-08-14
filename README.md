@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Puntos de Voluntariado
 
-## Getting Started
+Dashboard en vivo de los puntos que necesitan voluntarios y donaciones, leído
+directamente de un Google Sheet colaborativo que varias personas editan al mismo
+tiempo.
 
-First, run the development server:
+**Para registrar o actualizar un punto**, edita el Sheet — la página lo refleja
+en segundos, sin recargar:
+[Google Sheet colaborativo](https://docs.google.com/spreadsheets/d/1-hMGwC0XaSu5ddZ896gYyVRpmbPkVYg3NJ_6rSxK4Y8/edit)
+
+## Cómo funciona
+
+- El Sheet es público, así que se lee por su endpoint `gviz` en formato CSV.
+- Los route handlers (`app/api/sheet`, `app/api/sheets`) hacen ese fetch en el
+  servidor: evitan CORS y cachean 5 s para amortiguar el polling de varios
+  visitantes al mismo tiempo.
+- El cliente reconsulta cada 5 s (`app/hooks/useSheetData.ts`), así que el
+  retraso máximo entre una edición y verla en pantalla es de unos 10 s.
+- Las pestañas del documento se descubren en vivo desde el propio Sheet, con un
+  listado estático en `lib/sheet.ts` como respaldo.
+
+### Particularidades de los datos
+
+Cada hoja tiene su propio esquema y arrastra columnas fantasma (encabezados
+vacíos, notas del autor puestas como encabezado, nombres como `x` o
+`Columna 1`). `parseSheetCsv` en `lib/sheet.ts` las descarta y normaliza los
+nombres. Las celdas traen saltos de línea y énfasis estilo WhatsApp
+(`*texto*`), que se renderizan como tal.
+
+Las direcciones no se ubican en un mapa: se enlazan a la búsqueda de Google
+Maps. La geocodificación gratuita no distingue entre las varias vías homónimas
+de Bogotá porque ignora el número de placa, y ubicaba los puntos en localidades
+equivocadas.
+
+## Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 (App Router, Turbopack) · Gasoek One para el título y Google Sans
+Flex para el resto · paleta de la bandera de Colombia.
