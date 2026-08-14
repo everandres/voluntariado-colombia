@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Gasoek_One, Inter } from "next/font/google";
+import { Gasoek_One, Google_Sans_Flex } from "next/font/google";
 import "./globals.css";
 
+// Gasoek One es display: se usa únicamente en el título de la página.
 const gasoek = Gasoek_One({
   weight: "400",
   subsets: ["latin"],
@@ -9,7 +10,7 @@ const gasoek = Gasoek_One({
   display: "swap",
 });
 
-const inter = Inter({
+const googleSans = Google_Sans_Flex({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${gasoek.variable} ${inter.variable}`}>
+    <html lang="es" className={`${gasoek.variable} ${googleSans.variable}`}>
       <body>{children}</body>
     </html>
   );
