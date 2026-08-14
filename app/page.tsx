@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PlaceCard } from "./components/PlaceCard";
 import { StatusLegend } from "./components/StatusLegend";
-import { needStatus } from "@/lib/status";
+import { needLabel, needStatus } from "@/lib/status";
 import { useSheetData, useSheetTabs } from "./hooks/useSheetData";
 import { DEFAULT_GID, SHEET_ID } from "@/lib/sheet";
 
@@ -31,12 +31,21 @@ function ColombiaFlag() {
 export default function Page() {
   const tabs = useSheetTabs();
   const [gid, setGid] = useState(DEFAULT_GID);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const { rows, columns, updatedAt, loading, error } = useSheetData(gid);
 
   const needKey = columns.find((col) => col.startsWith("SE NECESITAN"));
   const needCount = needKey
     ? rows.filter((row) => needStatus(row[needKey] ?? "") === "on").length
     : 0;
+
+  const visibleRows =
+    statusFilter && needKey
+      ? rows.filter((row) => needLabel(row[needKey] ?? "") === statusFilter)
+      : rows;
+
+  const toggleFilter = (label: string) =>
+    setStatusFilter((current) => (current === label ? null : label));
 
   return (
     <main className="page">
@@ -71,7 +80,10 @@ export default function Page() {
               type="button"
               aria-selected={tab.gid === gid}
               className="tab"
-              onClick={() => setGid(tab.gid)}
+              onClick={() => {
+                setGid(tab.gid);
+                setStatusFilter(null);
+              }}
             >
               {tab.name}
             </button>
@@ -81,8 +93,10 @@ export default function Page() {
 
       <div className="metabar">
         <div className="stat">
-          <span className="stat-num">{rows.length}</span>
-          <span className="stat-label">registros</span>
+          <span className="stat-num">{visibleRows.length}</span>
+          <span className="stat-label">
+            {statusFilter ? `de ${rows.length} registros` : "registros"}
+          </span>
         </div>
         {needKey && (
           <div className="stat">
@@ -120,12 +134,17 @@ export default function Page() {
       )}
 
       {rows.length > 0 && needKey && (
-        <StatusLegend rows={rows} needKey={needKey} />
+        <StatusLegend
+          rows={rows}
+          needKey={needKey}
+          active={statusFilter}
+          onToggle={toggleFilter}
+        />
       )}
 
-      {rows.length > 0 && (
+      {visibleRows.length > 0 && (
         <div className="grid">
-          {rows.map((row, i) => (
+          {visibleRows.map((row, i) => (
             <PlaceCard key={i} row={row} columns={columns} />
           ))}
         </div>

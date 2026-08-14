@@ -38,26 +38,55 @@ function buildEntries(rows: SheetRow[], needKey: string): Entry[] {
 export function StatusLegend({
   rows,
   needKey,
+  active,
+  onToggle,
 }: {
   rows: SheetRow[];
   needKey: string;
+  active: string | null;
+  onToggle: (label: string) => void;
 }) {
+  // Las entradas salen de todas las filas, no de las visibles: si no, al
+  // filtrar desaparecerían los demás estados y no habría cómo volver.
   const entries = buildEntries(rows, needKey);
   if (entries.length === 0) return null;
 
   const subject = needSubject(needKey);
 
   return (
-    <section className="legend" aria-label="Qué significa cada etiqueta">
-      <h2 className="legend-title">Qué significa cada etiqueta</h2>
+    <section className="legend" aria-label="Filtrar por estado">
+      <div className="legend-head">
+        <h2 className="legend-title">
+          Qué significa cada etiqueta — toca una para filtrar
+        </h2>
+        {active && (
+          <button
+            type="button"
+            className="legend-clear"
+            onClick={() => onToggle(active)}
+          >
+            Ver todos ✕
+          </button>
+        )}
+      </div>
+
       <ul className="legend-items">
         {entries.map(({ label, status, count }) => (
-          <li key={label} className="legend-item">
-            <span className={BADGE_CLASS[status]}>{label}</span>
-            <span className="legend-text">
-              {needMeaning(status, subject)}
-              <span className="legend-count"> · {count}</span>
-            </span>
+          <li key={label}>
+            <button
+              type="button"
+              className={
+                active === label ? "legend-item legend-item-on" : "legend-item"
+              }
+              aria-pressed={active === label}
+              onClick={() => onToggle(label)}
+            >
+              <span className={BADGE_CLASS[status]}>{label}</span>
+              <span className="legend-text">
+                {needMeaning(status, subject)}
+                <span className="legend-count"> · {count}</span>
+              </span>
+            </button>
           </li>
         ))}
       </ul>
