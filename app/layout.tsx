@@ -1,25 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Gasoek_One, Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const gasoek = Gasoek_One({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Voluntariado — datos en vivo",
-  description: "Dashboard en vivo del Sheet de coordinación de voluntariado",
+  title: "Puntos de Voluntariado",
+  description:
+    "Dashboard en vivo de los puntos que necesitan voluntarios y donaciones.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="es" className={`${gasoek.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

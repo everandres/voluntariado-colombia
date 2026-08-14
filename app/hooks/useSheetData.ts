@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { SheetRow } from "@/lib/sheet";
+import type { SheetRow, SheetTab } from "@/lib/sheet";
+import { SHEET_TABS } from "@/lib/sheet";
 
-export function useSheetData(intervalMs = 5000) {
-  const [rows, setRows] = useState<SheetRow[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type SheetPayload = {
+  gid: string;
+  rows: SheetRow[];
+  columns: string[];
+  updatedAt: string;
+};
+
+const EMPTY: { rows: SheetRow[]; columns: string[] } = { rows: [], columns: [] };
+
+export function useSheetData(gid: string, intervalMs = 5000) {
+  // El gid viaja dentro del estado para que al cambiar de hoja los datos de la
+  // anterior se consideren obsoletos sin tener que resetear en el efecto.
+  const [data, setData] = useState<SheetPayload | null>(null);
+  const [failure, setFailure] = useState<{ gid: string; message: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -16,24 +27,30 @@ export function useSheetData(intervalMs = 5000) {
 
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/sheet", { signal: controller.signal });
+        const res = await fetch(`/api/sheet?gid=${encodeURIComponent(gid)}`, {
+          signal: controller.signal,
+        });
         const json = await res.json();
         if (!isMounted) return;
 
         if (json.error) {
-          setError(json.error);
+          setFailure({ gid, message: json.error });
         } else {
-          // No vaciamos la tabla en cada tick: solo reemplazamos con datos buenos.
-          setRows(json.rows);
-          setColumns(json.columns);
-          setUpdatedAt(json.updatedAt);
-          setError(null);
+          // Solo reemplazamos con datos buenos: la vista no parpadea en cada tick.
+          setData({
+            gid,
+            rows: json.rows,
+            columns: json.columns,
+            updatedAt: json.updatedAt,
+          });
+          setFailure(null);
         }
       } catch (e) {
         if (!isMounted || controller.signal.aborted) return;
-        setError(e instanceof Error ? e.message : "Error desconocido");
-      } finally {
-        if (isMounted) setLoading(false);
+        setFailure({
+          gid,
+          message: e instanceof Error ? e.message : "Error desconocido",
+        });
       }
     };
 
@@ -44,7 +61,40 @@ export function useSheetData(intervalMs = 5000) {
       controller.abort();
       clearInterval(interval);
     };
-  }, [intervalMs]);
+  }, [gid, intervalMs]);
 
-  return { rows, columns, updatedAt, loading, error };
+  const fresh = data?.gid === gid ? data : null;
+  const error = failure?.gid === gid ? failure.message : null;
+
+  return {
+    rows: fresh?.rows ?? EMPTY.rows,
+    columns: fresh?.columns ?? EMPTY.columns,
+    updatedAt: fresh?.updatedAt ?? null,
+    loading: !fresh && !error,
+    error,
+  };
+}
+
+/** Pestañas del documento; arranca con el listado estático y lo refresca. */
+export function useSheetTabs() {
+  const [discovered, setDiscovered] = useState<SheetTab[] | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/api/sheets", { signal: controller.signal })
+      .then((res) => res.json())
+      .then((json) => {
+        if (Array.isArray(json.tabs) && json.tabs.length > 0) {
+          setDiscovered(json.tabs);
+        }
+      })
+      .catch(() => {
+        // Nos quedamos con SHEET_TABS.
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return discovered ?? SHEET_TABS;
 }

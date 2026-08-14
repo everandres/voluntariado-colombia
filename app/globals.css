@@ -1,17 +1,23 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #ffffff;
+  --ink: #111111;
+  --ink-soft: #5c5c5c;
+  --ink-faint: #8e8e8e;
+  --line: #e6e6e6;
+  --line-strong: #111111;
+  --accent: #ff4d00;
+  --ok-bg: #e8f6ec;
+  --ok-ink: #14663a;
+  --off-bg: #f2f2f2;
+  --off-ink: #6b6b6b;
+  --alert: #b00020;
+  --radius: 14px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html,
@@ -22,28 +28,352 @@ body {
 
 body {
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 a {
   color: inherit;
-  text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* Gasoek One es una display font: se usa en títulos, botones y etiquetas.
+   El cuerpo va en un sans legible porque las notas del Sheet son largas. */
+.display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* ---------- layout ---------- */
+
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.masthead {
+  border-bottom: 3px solid var(--line-strong);
+  padding-bottom: 20px;
+}
+
+.title {
+  font-size: clamp(2.1rem, 7vw, 4.4rem);
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.title-accent {
+  color: var(--accent);
+}
+
+.tagline {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* ---------- pestañas ---------- */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+}
+
+/* Gasoek ya trae mucho espacio entre letras: sumarle tracking la vuelve
+   ilegible en tamaños chicos, por eso va en 0. */
+.tab {
+  font-family: var(--font-display), system-ui, sans-serif;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  letter-spacing: 0;
+  padding: 11px 18px;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.tab:hover {
+  background: var(--off-bg);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- meta ---------- */
+
+.metabar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 22px;
+  margin: 22px 0 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.stat-num {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.live {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* ---------- grid de tarjetas ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  /* Sin esto, una tarjeta con una lista larga de donaciones estira toda la fila. */
+  align-items: start;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #fff;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.card:hover {
+  border-color: var(--ink);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  text-transform: uppercase;
+  font-size: 1.02rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--off-bg);
+  color: var(--off-ink);
+  white-space: nowrap;
+}
+
+.badge-on {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.field-label {
+  font-size: 0.63rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 3px;
+}
+
+.field-value {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  white-space: pre-line; /* las celdas del Sheet traen saltos de línea */
+  overflow-wrap: anywhere;
+}
+
+/* Las listas de donaciones pueden ser larguísimas: se recortan con un
+   degradado y se abren con el botón. */
+.clamped {
+  max-height: 9.5em;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 65%, transparent 100%);
+}
+
+.expand-toggle {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.expand-toggle:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.action {
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  text-decoration: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.action:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+.action-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.action-primary:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------- estados ---------- */
+
+.notice {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.notice-error {
+  border-color: var(--alert);
+  color: var(--alert);
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.skeleton {
+  height: 190px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.footer a {
+  text-decoration: underline;
 }

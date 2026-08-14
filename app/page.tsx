@@ -1,69 +1,105 @@
 "use client";
 
-import { useSheetData } from "./hooks/useSheetData";
-
-const cellStyle: React.CSSProperties = {
-  border: "1px solid #ddd",
-  padding: 8,
-  verticalAlign: "top",
-  whiteSpace: "pre-line",
-  minWidth: 140,
-};
+import { useState } from "react";
+import { PlaceCard } from "./components/PlaceCard";
+import { useSheetData, useSheetTabs } from "./hooks/useSheetData";
+import { DEFAULT_GID, SHEET_ID } from "@/lib/sheet";
 
 export default function Page() {
-  const { rows, columns, updatedAt, loading, error } = useSheetData(5000);
+  const tabs = useSheetTabs();
+  const [gid, setGid] = useState(DEFAULT_GID);
+  const { rows, columns, updatedAt, loading, error } = useSheetData(gid);
 
-  if (loading) return <p style={{ padding: 24 }}>Cargando datos...</p>;
-
-  const hasData = rows.length > 0;
+  const needKey = columns.find((col) => col.startsWith("SE NECESITAN"));
+  const needCount = needKey
+    ? rows.filter((row) => /^s[ií]/i.test(row[needKey] ?? "")).length
+    : 0;
 
   return (
-    <main style={{ padding: 24, fontFamily: "sans-serif" }}>
-      <h1 style={{ margin: 0 }}>Voluntariado — datos en vivo</h1>
-      <p style={{ color: "#666", fontSize: 13 }}>
-        Última actualización:{" "}
-        {updatedAt ? new Date(updatedAt).toLocaleTimeString() : "—"} · {rows.length}{" "}
-        registros
-      </p>
+    <main className="page">
+      <header className="masthead">
+        <h1 className="title display">
+          Puntos de <span className="title-accent">Voluntariado</span>
+        </h1>
+        <p className="tagline">
+          Información en vivo desde el Google Sheet colaborativo. Se actualiza
+          sola cada pocos segundos — no hace falta recargar.
+        </p>
+
+        <nav className="tabs" role="tablist" aria-label="Hojas del documento">
+          {tabs.map((tab) => (
+            <button
+              key={tab.gid}
+              role="tab"
+              type="button"
+              aria-selected={tab.gid === gid}
+              className="tab"
+              onClick={() => setGid(tab.gid)}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <div className="metabar">
+        <div className="stat">
+          <span className="stat-num">{rows.length}</span>
+          <span className="stat-label">registros</span>
+        </div>
+        {needKey && (
+          <div className="stat">
+            <span className="stat-num">{needCount}</span>
+            <span className="stat-label">
+              {needKey.replace("SE NECESITAN ", "necesitan ")}
+            </span>
+          </div>
+        )}
+        <div className="live">
+          <span className="live-dot" aria-hidden="true" />
+          {updatedAt
+            ? `En vivo · ${new Date(updatedAt).toLocaleTimeString()}`
+            : "Conectando"}
+        </div>
+      </div>
 
       {error && (
-        <p style={{ color: "#b00", fontSize: 13 }}>
+        <p className="notice notice-error">
           Error: {error}
-          {hasData && " (mostrando los últimos datos recibidos)"}
+          {rows.length > 0 && " — mostrando los últimos datos recibidos."}
         </p>
       )}
 
-      {!hasData && !error && <p>No hay datos para mostrar.</p>}
-
-      {hasData && (
-        <div style={{ overflowX: "auto", marginTop: 16 }}>
-          <table style={{ borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col}
-                    style={{ ...cellStyle, textAlign: "left", background: "#f5f5f5" }}
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={i}>
-                  {columns.map((col) => (
-                    <td key={col} style={cellStyle}>
-                      {row[col]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {loading && (
+        <div className="skeleton-grid">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="skeleton" />
+          ))}
         </div>
       )}
+
+      {!loading && rows.length === 0 && !error && (
+        <p className="notice">Esta hoja no tiene registros todavía.</p>
+      )}
+
+      {rows.length > 0 && (
+        <div className="grid">
+          {rows.map((row, i) => (
+            <PlaceCard key={i} row={row} columns={columns} />
+          ))}
+        </div>
+      )}
+
+      <footer className="footer">
+        Fuente:{" "}
+        <a
+          href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${gid}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google Sheet original
+        </a>
+      </footer>
     </main>
   );
 }
