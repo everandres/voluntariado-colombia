@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { PlaceCard } from "./components/PlaceCard";
+import { StatusLegend } from "./components/StatusLegend";
+import { needStatus } from "@/lib/status";
 import { useSheetData, useSheetTabs } from "./hooks/useSheetData";
 import { DEFAULT_GID, SHEET_ID } from "@/lib/sheet";
 
@@ -33,7 +35,7 @@ export default function Page() {
 
   const needKey = columns.find((col) => col.startsWith("SE NECESITAN"));
   const needCount = needKey
-    ? rows.filter((row) => /^s[ií]/i.test(row[needKey] ?? "")).length
+    ? rows.filter((row) => needStatus(row[needKey] ?? "") === "on").length
     : 0;
 
   return (
@@ -115,6 +117,10 @@ export default function Page() {
 
       {!loading && rows.length === 0 && !error && (
         <p className="notice">Esta hoja no tiene registros todavía.</p>
+      )}
+
+      {rows.length > 0 && needKey && (
+        <StatusLegend rows={rows} needKey={needKey} />
       )}
 
       {rows.length > 0 && (

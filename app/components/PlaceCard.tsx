@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { isColumn, type SheetRow } from "@/lib/sheet";
+import { BADGE_CLASS, needLabel, needStatus } from "@/lib/status";
 
 /** Columnas que se muestran como botón en vez de texto. */
 const ACTION_KEYS = [
@@ -123,10 +124,7 @@ export function PlaceCard({
   const titleKey = columns.find((col) => isColumn(col, "LUGAR")) ?? columns[0];
   const needKey = columns.find((col) => col.startsWith("SE NECESITAN"));
   const need = needKey ? row[needKey] : "";
-  // El Sheet usa SI / NO, pero también estados intermedios como
-  // "VALIDANDO INFORMACIÓN": esos no son un "no", van en neutro.
-  const needsHelp = /^s[ií]\b/i.test(need);
-  const doesNotNeed = /^no\b/i.test(need);
+  const status = needStatus(need);
 
   // El encabezado real puede venir con texto pegado o acentuado distinto, así
   // que resolvemos cada columna de acción por comparación normalizada.
@@ -164,13 +162,7 @@ export function PlaceCard({
     <article className="card">
       <header className="card-head">
         {need && (
-          <span
-            className={`badge ${
-              needsHelp ? "badge-on" : doesNotNeed ? "badge-off" : "badge-wip"
-            }`}
-          >
-            {needsHelp ? "Se necesita" : doesNotNeed ? "No se necesita" : need}
-          </span>
+          <span className={BADGE_CLASS[status]}>{needLabel(need, status)}</span>
         )}
         <h2 className="card-title">{row[titleKey] || "Sin nombre"}</h2>
       </header>
