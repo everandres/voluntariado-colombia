@@ -35,7 +35,22 @@ function withEmphasis(text: string) {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+/** Búsqueda de la dirección en Google Maps. */
+function mapsSearchUrl(address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${address}, Bogotá, Colombia`,
+  )}`;
+}
+
+function Field({
+  label,
+  value,
+  asAddress = false,
+}: {
+  label: string;
+  value: string;
+  asAddress?: boolean;
+}) {
   const collapsible = value.length > LONG_TEXT;
   const [open, setOpen] = useState(false);
 
@@ -45,7 +60,22 @@ function Field({ label, value }: { label: string; value: string }) {
       <div
         className={collapsible && !open ? "field-value clamped" : "field-value"}
       >
-        {withEmphasis(value)}
+        {asAddress ? (
+          <a
+            className="field-link"
+            href={mapsSearchUrl(value)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Buscar esta dirección en Google Maps"
+          >
+            {value}
+            <span className="field-link-hint" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        ) : (
+          withEmphasis(value)
+        )}
       </div>
       {collapsible && (
         <button
@@ -118,7 +148,7 @@ export function PlaceCard({
     <article className="card">
       <header className="card-head">
         {need && (
-          <span className={needsHelp ? "badge badge-on" : "badge"}>
+          <span className={`badge ${needsHelp ? "badge-on" : "badge-off"}`}>
             {needsHelp
               ? "Se necesita"
               : /^no$/i.test(need)
@@ -131,7 +161,12 @@ export function PlaceCard({
 
       <div className="fields">
         {textKeys.map((key) => (
-          <Field key={key} label={key} value={row[key]} />
+          <Field
+            key={key}
+            label={key}
+            value={row[key]}
+            asAddress={key === "DIRECCIÓN"}
+          />
         ))}
 
         {unlinkableContact && (

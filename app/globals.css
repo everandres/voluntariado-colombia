@@ -10,6 +10,11 @@
   /* El amarillo sobre blanco no alcanza contraste de texto (~1.5:1), así que
      solo se usa como fondo o franja. Azul (11:1) y rojo (5.9:1) sí sirven. */
 
+  /* Texto del estado sobre el fondo amarillo del badge. Ambos se oscurecieron
+     respecto al verde/rojo puros para alcanzar contraste sobre #fcd116. */
+  --verde: #0a5c2c;
+  --rojo-oscuro: #96101d;
+
   --line: #e6e6e6;
   --line-strong: var(--azul);
   --off-bg: #f2f2f2;
@@ -224,20 +229,36 @@ a {
   align-items: start;
 }
 
+/* Marco tricolor: el degradado va en el border-box y el blanco en el
+   padding-box. Con border-image se perdería el border-radius. */
 .card {
-  border: 1px solid var(--line);
+  border: 3px solid transparent;
   border-radius: var(--radius);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: #fff;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(
+        to right,
+        var(--amarillo) 0 50%,
+        var(--azul) 50% 75%,
+        var(--rojo) 75% 100%
+      )
+      border-box;
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
 }
 
 .card:hover {
-  border-color: var(--azul);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
 }
 
 /* El estado (se necesita / no) va antes del nombre del lugar: es el dato que
@@ -258,20 +279,22 @@ a {
 
 .badge {
   flex-shrink: 0;
-  font-size: 0.63rem;
-  font-weight: 700;
+  font-size: 0.66rem;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 6px 11px;
   border-radius: 999px;
-  background: var(--off-bg);
-  color: var(--off-ink);
+  background: var(--amarillo);
   white-space: nowrap;
 }
 
 .badge-on {
-  background: var(--amarillo);
-  color: var(--ink);
+  color: var(--verde);
+}
+
+.badge-off {
+  color: var(--rojo-oscuro);
 }
 
 .fields {
@@ -286,6 +309,24 @@ a {
   text-transform: uppercase;
   color: var(--azul);
   margin-bottom: 3px;
+}
+
+/* La dirección abre la búsqueda en Google Maps. */
+.field-link {
+  color: var(--azul);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.field-link:hover {
+  color: var(--rojo);
+}
+
+.field-link-hint {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .field-value {
