@@ -309,6 +309,11 @@ a {
   color: var(--rojo-oscuro);
 }
 
+/* Estados intermedios del Sheet ("validando información"): ni verde ni rojo. */
+.badge-wip {
+  color: var(--azul);
+}
+
 .fields {
   display: flex;
   flex-direction: column;

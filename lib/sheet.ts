@@ -29,21 +29,49 @@ export function isValidGid(gid: string) {
 export type SheetRow = Record<string, string>;
 
 /**
- * Los headers traen texto de UI pegado (enlaces y notas que en el Sheet se ven
- * fuera de la celda) o nombres provisionales. Mapeamos el crudo al limpio.
+ * Alias exactos, solo para lo que la heurística de abajo no puede deducir.
+ * Todo lo demás (texto de UI pegado al encabezado) se limpia por patrón.
  */
 const HEADER_ALIASES: Record<string, string> = {
-  "También puedes ver esta información en un mapa LUGAR": "LUGAR",
-  "Míralo aquí SE NECESITAN VOLUNTARIOS": "SE NECESITAN VOLUNTARIOS",
-  "Y preguntarle a Gemini si tienes alguna duda HORARIOS": "HORARIOS",
-  "Pregunta haciendo click aquí NOTAS": "NOTAS",
   "SE NECESITAN VOLUNTARIOS YA": "SE NECESITAN VOLUNTARIOS",
   x: "DETALLES",
 };
 
+/**
+ * En el Sheet hay enlaces y notas flotantes puestos encima de la fila de
+ * encabezados ("Míralo aquí", "Pregunta haciendo click aquí", "También puedes
+ * ver esta información en un mapa"). Al exportar a CSV se pegan al nombre de la
+ * columna que tengan debajo, y se MUEVEN de columna cuando alguien edita el
+ * documento — por eso no sirve un mapa de encabezados exactos.
+ *
+ * Los nombres reales van en MAYÚSCULAS y el ruido en Sentence case, así que nos
+ * quedamos con el tramo final en mayúsculas. Lo que no encaje se devuelve tal
+ * cual y lo filtra isJunkHeader.
+ */
+const UPPERCASE_TAIL = /([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 ]*)$/;
+
 function cleanHeader(raw: string) {
   const trimmed = raw.trim().replace(/\s+/g, " ");
-  return HEADER_ALIASES[trimmed] ?? trimmed;
+
+  const alias = HEADER_ALIASES[trimmed];
+  if (alias) return alias;
+
+  return UPPERCASE_TAIL.exec(trimmed)?.[1].trim() ?? trimmed;
+}
+
+/**
+ * Compara nombres de columna ignorando acentos y mayúsculas, para que el código
+ * no dependa de cómo esté escrito el encabezado en el Sheet ese día.
+ */
+export function isColumn(column: string, name: string) {
+  const fold = (text: string) =>
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // marcas de acento
+      .trim()
+      .toUpperCase();
+
+  return fold(column) === fold(name);
 }
 
 /** Columnas que no son datos: sin nombre, placeholders o notas sueltas. */

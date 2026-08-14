@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SheetRow } from "@/lib/sheet";
+import { isColumn, type SheetRow } from "@/lib/sheet";
 
 /** Columnas que se muestran como botón en vez de texto. */
 const ACTION_KEYS = [
@@ -120,40 +120,56 @@ export function PlaceCard({
   row: SheetRow;
   columns: string[];
 }) {
-  const titleKey = columns.includes("LUGAR") ? "LUGAR" : columns[0];
+  const titleKey = columns.find((col) => isColumn(col, "LUGAR")) ?? columns[0];
   const needKey = columns.find((col) => col.startsWith("SE NECESITAN"));
   const need = needKey ? row[needKey] : "";
-  const needsHelp = /^s[ií]/i.test(need);
+  // El Sheet usa SI / NO, pero también estados intermedios como
+  // "VALIDANDO INFORMACIÓN": esos no son un "no", van en neutro.
+  const needsHelp = /^s[ií]\b/i.test(need);
+  const doesNotNeed = /^no\b/i.test(need);
+
+  // El encabezado real puede venir con texto pegado o acentuado distinto, así
+  // que resolvemos cada columna de acción por comparación normalizada.
+  const actionColumns = ACTION_KEYS.map((key) => ({
+    key,
+    column: columns.find((col) => isColumn(col, key)),
+  })).filter((entry) => entry.column && row[entry.column]);
 
   const textKeys = columns.filter(
     (col) =>
       col !== titleKey &&
       col !== needKey &&
-      !ACTION_KEYS.includes(col as (typeof ACTION_KEYS)[number]) &&
+      !actionColumns.some((entry) => entry.column === col) &&
       row[col],
   );
 
-  const actions = ACTION_KEYS.filter((key) => columns.includes(key) && row[key])
-    .map((key) => ({ key, value: row[key], href: actionHref(key, row[key]) }))
+  const actions = actionColumns
+    .map(({ key, column }) => ({
+      key,
+      href: actionHref(key, row[column as string]),
+    }))
     .filter((action) => action.href !== null);
 
   // Un contacto que no es enlazable (p. ej. "preguntar por Ana") se muestra
   // como texto para no perder el dato.
+  const contactColumn = actionColumns.find(
+    (entry) => entry.key === "CONTACTO CLAVE",
+  )?.column;
   const unlinkableContact =
-    row["CONTACTO CLAVE"] && !actions.some((a) => a.key === "CONTACTO CLAVE")
-      ? row["CONTACTO CLAVE"]
+    contactColumn && !actions.some((a) => a.key === "CONTACTO CLAVE")
+      ? row[contactColumn]
       : null;
 
   return (
     <article className="card">
       <header className="card-head">
         {need && (
-          <span className={`badge ${needsHelp ? "badge-on" : "badge-off"}`}>
-            {needsHelp
-              ? "Se necesita"
-              : /^no$/i.test(need)
-                ? "No se necesita"
-                : need}
+          <span
+            className={`badge ${
+              needsHelp ? "badge-on" : doesNotNeed ? "badge-off" : "badge-wip"
+            }`}
+          >
+            {needsHelp ? "Se necesita" : doesNotNeed ? "No se necesita" : need}
           </span>
         )}
         <h2 className="card-title">{row[titleKey] || "Sin nombre"}</h2>
@@ -165,7 +181,7 @@ export function PlaceCard({
             key={key}
             label={key}
             value={row[key]}
-            asAddress={key === "DIRECCIÓN"}
+            asAddress={isColumn(key, "DIRECCIÓN")}
           />
         ))}
 
