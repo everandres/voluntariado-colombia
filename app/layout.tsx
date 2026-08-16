@@ -17,9 +17,9 @@ const googleSans = Google_Sans_Flex({
 });
 
 export const metadata: Metadata = {
-  title: "Puntos de Voluntariado",
+  title: "Puntos de Voluntariado — la información se mudó",
   description:
-    "Dashboard en vivo de los puntos que necesitan voluntarios y donaciones.",
+    "Los puntos de acopio y voluntariado ahora se consultan en redacopiobogota.com. No dejes de ayudar.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

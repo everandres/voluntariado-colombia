@@ -125,6 +125,80 @@ a {
   color: var(--rojo);
 }
 
+/* ---------- aviso de cierre ---------- */
+
+/* Apilado en móvil; en pantallas anchas el cierre ocupa la mitad derecha, que
+   si no quedaría vacía, y así cabe en dos líneas en vez de partirse en cinco. */
+.aviso {
+  display: grid;
+  gap: 44px;
+  margin: 44px 0 8px;
+}
+
+@media (min-width: 900px) {
+  .aviso {
+    grid-template-columns: minmax(0, 36ch) 1fr;
+    gap: 56px;
+    align-items: start;
+    margin-top: 56px;
+  }
+}
+
+.aviso-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rojo);
+  margin-bottom: 14px;
+}
+
+.aviso-texto {
+  font-size: clamp(1.15rem, 2.6vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+  max-width: 30ch;
+}
+
+.aviso-cta {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 16px 26px;
+  border-radius: 999px;
+  background: var(--rojo);
+  border: 3px solid var(--rojo);
+  color: #fff;
+  font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.aviso-cta:hover,
+.aviso-cta:focus-visible {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: #fff;
+}
+
+/* El cierre es un titular, no texto de lectura: por eso va en la display. */
+.aviso-cierre {
+  padding-top: 28px;
+  border-top: 5px solid transparent;
+  border-image: linear-gradient(
+      to right,
+      var(--amarillo) 0 50%,
+      var(--azul) 50% 75%,
+      var(--rojo) 75% 100%
+    )
+    1;
+  font-size: clamp(1.6rem, 5.2vw, 3rem);
+  line-height: 1.05;
+  color: var(--azul);
+}
+
 /* ---------- pestañas ---------- */
 
 .tabs {
